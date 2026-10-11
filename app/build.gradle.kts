@@ -22,6 +22,11 @@ android {
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // SpacePush serves the spaces' state and sends notifications; the app falls
+        // back to reading the spaces directly. For a local SpacePush on the emulator,
+        // use "http://10.0.2.2:8080" (and allow cleartext for that host).
+        buildConfigField("String", "SPACEPUSH_URL", "\"https://push.grafixmafia.net\"")
     }
 
     buildTypes {
@@ -34,11 +39,16 @@ android {
     }
     ndkVersion = "30.0.16248370"
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    androidResources {
+        // Lets Android 13+ offer the app's languages in the system settings.
+        generateLocaleConfig = true
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -50,9 +60,14 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

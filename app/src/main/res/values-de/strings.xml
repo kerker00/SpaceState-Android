@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_open">Offen</string>
+    <string name="status_closed">Geschlossen</string>
+    <string name="status_unknown">Unbekannt</string>
+
+    <string name="room_closed">Geschlossen</string>
+    <string name="room_keyholder">Nur Keyholder</string>
+    <string name="room_member">Nur Mitglieder</string>
+    <string name="room_open">Offen</string>
+    <string name="room_open_plus">Offen+</string>
+    <string name="room_closing">Schließt gleich</string>
+    <string name="room_unknown">Unbekannt (%1$s)</string>
+
+    <string name="changed">Geändert %1$s</string>
+    <string name="updated">Stand: %1$s</string>
+    <string name="rooms">Räume</string>
+    <string name="website">Website</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="settings">Einstellungen</string>
+
+    <string name="space">Space</string>
+    <string name="check_every">Abfrage alle</string>
+    <plurals name="minutes">
+        <item quantity="one">%d Minute</item>
+        <item quantity="other">%d Minuten</item>
+    </plurals>
+    <string name="choose_space">Space wählen</string>
+    <string name="search_spaces">Spaces durchsuchen</string>
+    <string name="spaces_unavailable">Spaces nicht verfügbar</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="back">Zurück</string>
+    <string name="selected">Ausgewählt</string>
+
+    <string name="error_unreachable">Nicht erreichbar. Prüfe die Verbindung.</string>
+    <string name="error_timeout">Die Anfrage hat zu lange gedauert.</string>
+    <string name="error_http">Der Server antwortete mit Fehler %1$d.</string>
+    <string name="error_too_large">Die Antwort war zu groß.</string>
+    <string name="error_invalid_data">Die Daten konnten nicht gelesen werden.</string>
+    <string name="error_invalid_endpoint">Die Adresse des Space ist ungültig.</string>
+    <string name="error_other">Etwas ist schiefgegangen (%1$s).</string>
+</resources>
