@@ -22,14 +22,16 @@ The app uses [SpaceStateKit](https://github.com/kerker00/SpaceStateKit), the sam
 
 Requirements: Android Studio (JDK 17+), Android NDK r30, Swift 6.4 with the Swift SDK for Android.
 
-Until `spacestatekit-android` is published, it is built from a sibling checkout:
+Until `spacestatekit-android` is published, it is built from a sibling checkout of the release in `gradle/libs.versions.toml`:
 
     git clone git@github.com:kerker00/SpaceStateKit.git ../SpaceStateKit
-    git -C ../SpaceStateKit switch feature/android
+    git -C ../SpaceStateKit switch --detach 0.3.0
     ./gradlew :app:assembleDebug
     ./gradlew :app:testDebugUnitTest
 
 The first build compiles swift-syntax for swift-java and takes several minutes.
+
+Release builds are signed with the key described in `~/.android/spacestate-release.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`), or another file passed with `-PreleaseSigning=<path>`; without it they stay unsigned. `./gradlew :app:assembleRelease` writes one APK per ABI to `app/build/outputs/apk/release/`.
 
 ## License
 
