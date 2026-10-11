@@ -1,24 +1,26 @@
 package net.grafixmafia.spacestate
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import net.grafixmafia.spacestate.directory.DirectoryViewModel
+import net.grafixmafia.spacestate.status.StatusViewModel
+import net.grafixmafia.spacestate.ui.SettingsScreen
+import net.grafixmafia.spacestate.ui.SpacePickerScreen
+import net.grafixmafia.spacestate.ui.StatusScreen
 import net.grafixmafia.spacestate.ui.theme.SpaceStateTheme
-import net.grafixmafia.spacestatekit.SpaceStateClient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,34 +28,61 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SpaceStateTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SmokeTest(Modifier.padding(innerPadding))
-                }
+                SpaceStateApp()
             }
         }
     }
 }
 
-/** Temporary: proves SpaceStateKit runs inside the app. Replaced by the status screen. */
+private object Routes {
+    const val STATUS = "status"
+    const val SETTINGS = "settings"
+    const val SPACE_PICKER = "settings/space"
+}
+
 @Composable
-fun SmokeTest(modifier: Modifier = Modifier) {
-    var text by remember { mutableStateOf("Loading…") }
-    LaunchedEffect(Unit) {
-        val client = SpaceStateClient(
-            spacePushUrl = "https://push.grafixmafia.net",
-            userAgent = "SpaceState/0 (Android ${Build.VERSION.RELEASE})",
-            activePeriodsFile = null,
-        )
-        val endpoint = SpaceStateClient.mainframeEndpoint
-        text = runCatching {
-            val space = client.space(endpoint)
-            val rooms = client.mainframeRooms()
-            val directory = client.directory()
-            "${space.name}: ${space.status} since ${space.lastChange}\n" +
-                rooms.joinToString("\n") { "${it.name}: ${it.state}" } +
-                "\n${directory.size} spaces in the directory"
-        }.getOrElse { "Failed: $it" }
-        Log.i("SpaceStateSmoke", text)
+private fun SpaceStateApp() {
+    // Scoped to the activity, so every screen shares one status and one directory.
+    val status: StatusViewModel = viewModel(factory = StatusViewModel.Factory)
+    val directory: DirectoryViewModel = viewModel(factory = DirectoryViewModel.Factory)
+    val statusState by status.state.collectAsStateWithLifecycle()
+    val directoryState by directory.state.collectAsStateWithLifecycle()
+
+    // Polls while the app is visible.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { status.poll() }
     }
-    Text(text, modifier)
+
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = Routes.STATUS) {
+        composable(Routes.STATUS) {
+            StatusScreen(
+                state = statusState,
+                onRefresh = status::refresh,
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                state = statusState,
+                onChooseSpace = { navController.navigate(Routes.SPACE_PICKER) },
+                onRefreshSecondsChange = status::setRefreshSeconds,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.SPACE_PICKER) {
+            SpacePickerScreen(
+                directory = directoryState,
+                selectedEndpoint = statusState.endpoint,
+                onAppear = directory::loadIfNeeded,
+                onRetry = directory::load,
+                onSelect = { endpoint ->
+                    status.selectSpace(endpoint)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+    }
 }
