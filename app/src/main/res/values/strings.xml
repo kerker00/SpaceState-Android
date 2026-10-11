@@ -1,3 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SpateState</string>
+    <string name="app_name" translatable="false">SpaceState</string>
+
+    <string name="status_open">Open</string>
+    <string name="status_closed">Closed</string>
+    <string name="status_unknown">Unknown</string>
+
+    <string name="room_closed">Closed</string>
+    <string name="room_keyholder">Keyholders only</string>
+    <string name="room_member">Members only</string>
+    <string name="room_open">Open</string>
+    <string name="room_open_plus">Open+</string>
+    <string name="room_closing">Closing</string>
+    <string name="room_unknown">Unknown (%1$s)</string>
+
+    <!-- %1$s is a relative time such as "5 minutes ago". -->
+    <string name="changed">Changed %1$s</string>
+    <!-- %1$s is a time of day. -->
+    <string name="updated">Updated %1$s</string>
+    <string name="rooms">Rooms</string>
+    <string name="website">Website</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Settings</string>
+
+    <string name="space">Space</string>
+    <string name="check_every">Check every</string>
+    <plurals name="minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="choose_space">Choose Space</string>
+    <string name="search_spaces">Search spaces</string>
+    <string name="spaces_unavailable">Spaces unavailable</string>
+    <string name="try_again">Try Again</string>
+    <string name="back">Back</string>
+    <string name="selected">Selected</string>
+
+    <string name="error_unreachable">Not reachable. Check the connection.</string>
+    <string name="error_timeout">The request took too long.</string>
+    <string name="error_http">The server answered with error %1$d.</string>
+    <string name="error_too_large">The answer was too large.</string>
+    <string name="error_invalid_data">The data could not be read.</string>
+    <string name="error_invalid_endpoint">The space\'s address is invalid.</string>
+    <string name="error_other">Something went wrong (%1$s).</string>
 </resources>

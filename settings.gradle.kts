@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "SpaceState-Android"
 include(":app")
+
+// SpaceStateKit for Android, built from a sibling checkout until it is published.
+includeBuild("../SpaceStateKit/Android")

@@ -1,30 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from SpaceState's AppIcon.icon (h.svg, gear.svg). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    android:viewportWidth="1400"
+    android:viewportHeight="1400">
+    <group android:translateX="188" android:translateY="188">
+        <path android:fillColor="#FA9E1A" android:pathData="M845.5,445.7 L849.6,472.0 L910.5,477.5 L910.5,546.5 L849.6,552.0 L845.5,578.3 L839.2,604.3 L893.4,632.6 L867.0,696.4 L808.6,678.1 L794.7,700.9 L779.0,722.5 L818.2,769.4 L769.4,818.2 L722.5,779.0 L700.9,794.7 L678.1,808.6 L696.4,867.0 L632.6,893.4 L604.3,839.2 L578.3,845.5 L552.0,849.6 L546.5,910.5 L477.5,910.5 L472.0,849.6 L445.7,845.5 L419.7,839.2 L391.4,893.4 L327.6,867.0 L345.9,808.6 L323.1,794.7 L301.5,779.0 L254.6,818.2 L205.8,769.4 L245.0,722.5 L229.3,700.9 L215.4,678.1 L157.0,696.4 L130.6,632.6 L184.8,604.3 L178.5,578.3 L174.4,552.0 L113.5,546.5 L113.5,477.5 L174.4,472.0 L178.5,445.7 L184.8,419.7 L130.6,391.4 L157.0,327.6 L215.4,345.9 L229.3,323.1 L245.0,301.5 L205.8,254.6 L254.6,205.8 L301.5,245.0 L323.1,229.3 L345.9,215.4 L327.6,157.0 L391.4,130.6 L419.7,184.8 L445.7,178.5 L472.0,174.4 L477.5,113.5 L546.5,113.5 L552.0,174.4 L578.3,178.5 L604.3,184.8 L632.6,130.6 L696.4,157.0 L678.1,215.4 L700.9,229.3 L722.5,245.0 L769.4,205.8 L818.2,254.6 L779.0,301.5 L794.7,323.1 L808.6,345.9 L867.0,327.6 L893.4,391.4 L839.2,419.7 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M248.2,440.4 L354.7,365.8 L595.6,709.8 L489.1,784.4 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M428.4,314.2 L534.9,239.6 L775.8,583.6 L669.3,658.2 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M449.2,509.6 L531.2,452.2 L574.8,514.4 L492.8,571.8 Z" />
+    </group>
 </vector>
