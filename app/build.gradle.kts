@@ -16,6 +16,11 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        ndk {
+            // The ABIs SpaceStateKit is built for.
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -27,6 +32,7 @@ android {
             }
         }
     }
+    ndkVersion = "30.0.16248370"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -37,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.spacestatekit)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
