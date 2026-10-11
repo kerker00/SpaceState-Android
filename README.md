@@ -22,4 +22,4 @@ The first build compiles swift-syntax for swift-java and takes several minutes.
 
 ## License
 
-MIT.
+MIT, see [LICENSE.MD](LICENSE.MD).
