@@ -2,7 +2,7 @@
 
 Shows whether a hackerspace is open – the Android version of [SpaceState](https://github.com/kerker00/SpaceState) for macOS and iOS.
 
-Work in progress. The plan and decisions live in [SpaceState's PROJECT.md](https://github.com/kerker00/SpaceState/blob/master/docs/PROJECT.md).
+Work in progress. The Apple implementation and shared architecture are described in [SpaceState's architecture documentation](https://github.com/kerker00/SpaceState/blob/dev/docs/PROJECT.md). The only maintained roadmap and open decisions for all projects live in the local `../Plan.md` when the repositories share the SpaceState workspace; that file is not tracked in this repository.
 
 ## Features
 
@@ -12,7 +12,7 @@ Work in progress. The plan and decisions live in [SpaceState's PROJECT.md](https
 - State is read through [SpacePush](https://github.com/kerker00/SpacePush), with direct SpaceAPI requests as fallback; refreshed every 1 to 15 minutes while the app is visible, and by pulling down.
 - English and German; Android 13+ also offers the language per app in the system settings.
 
-Planned: home screen widgets and push notifications.
+Home screen widgets and push notifications are not implemented in this version.
 
 ## Shared code
 
@@ -22,7 +22,9 @@ The app uses [SpaceStateKit](https://github.com/kerker00/SpaceStateKit), the sam
 
 Requirements: Android Studio (JDK 17+), Android NDK r30, Swift 6.4 with the Swift SDK for Android.
 
-Until `spacestatekit-android` is published, it is built from a sibling checkout of the release in `gradle/libs.versions.toml`:
+Gradle currently builds `spacestatekit-android` from `../SpaceStateKit/Android`, using the release in `gradle/libs.versions.toml` (`0.3.0`). Use a dedicated Android build workspace with sibling checkouts of `SpaceState-Android` and `SpaceStateKit`, plus the required Swift Android SDK. This keeps the bridge checkout separate from the Kit checkout used for Apple/CLI development. A Kit checkout without the `Android/` directory cannot satisfy this composite build.
+
+From the Android checkout in that dedicated workspace, create its Kit sibling and select the matching release:
 
     git clone git@github.com:kerker00/SpaceStateKit.git ../SpaceStateKit
     git -C ../SpaceStateKit switch --detach 0.3.0
