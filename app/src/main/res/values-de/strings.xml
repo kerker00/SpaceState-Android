@@ -5,7 +5,7 @@
     <string name="status_unknown">Unbekannt</string>
 
     <string name="room_closed">Geschlossen</string>
-    <string name="room_keyholder">Nur Keyholder</string>
+    <string name="room_keyholder">Nur Schlüsselträger</string>
     <string name="room_member">Nur Mitglieder</string>
     <string name="room_open">Offen</string>
     <string name="room_open_plus">Offen+</string>

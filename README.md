@@ -15,6 +15,9 @@ Work in progress. The Apple implementation and shared architecture are described
 
 Home screen widgets and push notifications are not implemented in this version.
 
+English/German status labels, Mainframe room names, product names and observation
+terms follow the [shared terminology](https://github.com/kerker00/SpaceState/blob/dev/docs/TERMINOLOGY.md).
+
 ## Shared code
 
 The app uses [SpaceStateKit](https://github.com/kerker00/SpaceStateKit), the same Swift package as the Apple apps, compiled for Android with the Swift SDK for Android and bridged to Kotlin with swift-java (see SpaceStateKit's `Android/`).
