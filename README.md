@@ -11,6 +11,7 @@ Work in progress. The Apple implementation and shared architecture are described
 - Mainframe's rooms (Space, Radstelle, 3D Lab, Machining) with independent observation times and failures.
 - State is read through [SpacePush](https://github.com/kerker00/SpacePush), with direct SpaceAPI requests as fallback; refreshed every 1 to 15 minutes while the app is visible, and by pulling down.
 - Original observation, successful receipt and last attempt shown separately. Retained expired or failed states become unknown without losing names or last known details. Directory opening flags expire independently of name search.
+- Detail view with access hints, country/timezone, coordinates/maps, contacts/keyholders, feeds, projects and further links. Linked spaces open with an isolated selection; Back returns to the saved space.
 - English and German; Android 13+ also offers the language per app in the system settings.
 
 Home screen widgets and push notifications are not implemented in this version.
@@ -35,20 +36,19 @@ Gradle builds `spacestatekit-android` from the existing sibling
 version 0.3.2; **the composite build uses the actual sibling source and does not
 pin or download an AAR by that version**.
 
-The C-01 app changes in this branch require the additive Android observation
-facade from [Kit PR #8](https://github.com/kerker00/SpaceStateKit/pull/8), currently
-commit `1a2e7b04cadf0ecdb0727f1fe9647078cfa2afee`. These APIs are not in the
-published 0.3.2 tag. Use the paired source for branch validation; a subsequent
-release/adoption is a separate step. Keep the Linux build workspace independent
-of the Kit checkout used for Apple/CLI work.
+This detail-view branch requires the matching `feat/android-space-details`
+source from SpaceStateKit: [Kit PR #9](https://github.com/kerker00/SpaceStateKit/pull/9),
+exact source commit `3fc29f8deaf9acf79bc16b04b4d320b3292a5146`. Neither the Android observation facade nor these detail
+exports are in the published 0.3.2 tag. Select the exact paired Kit/app commits
+from their PR validation notes for the composite build; the coordinate alone does
+not pin source. Keep the Linux workspace independent of Apple/CLI dependency
+checkouts.
 
-From the Android checkout with an existing Kit sibling, select the paired source
-over HTTPS and build the debug app and test bundle without running tests:
+With the matching Kit sibling selected, build the debug app and test bundle
+without running tests:
 
 ```sh
-git -C ../SpaceStateKit -c core.sshCommand=false fetch https://github.com/kerker00/SpaceStateKit.git feat/android-observation-freshness
-git -C ../SpaceStateKit switch --detach 1a2e7b04cadf0ecdb0727f1fe9647078cfa2afee
-./gradlew :app:assembleDebug :app:compileDebugUnitTestKotlin --no-daemon
+GIT_SSH_COMMAND=false GIT_ALLOW_PROTOCOL=https:file ./gradlew :app:assembleDebug :app:compileDebugUnitTestKotlin --no-daemon --console=plain
 ```
 
 This build generates real Java/JNI bindings and packages both configured ABIs.

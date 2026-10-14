@@ -40,6 +40,7 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 import java.util.Locale
+import net.grafixmafia.spacestate.details.DetailLinks
 import net.grafixmafia.spacestate.R
 import net.grafixmafia.spacestate.status.StatusUiState
 import net.grafixmafia.spacestatekit.ObservationFreshness
@@ -48,15 +49,21 @@ import net.grafixmafia.spacestatekit.SpaceStatus
 /** Selected space and independent room evidence, on the shared card surface. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: () -> Unit) {
+fun StatusScreen(
+    state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: () -> Unit,
+    onOpenDetails: (() -> Unit)? = null, onBack: (() -> Unit)? = null,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
+                navigationIcon = { onBack?.let { BackButton(it) } },
                 actions = {
+                  if (onBack == null) {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings))
                     }
+                  }
                 },
             )
         },
@@ -123,7 +130,10 @@ fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: ()
                             }
                         }
                     }
-                    state.info?.website?.let { website ->
+                    if (state.info != null && onOpenDetails != null) {
+                        item { OutlinedButton(onClick = onOpenDetails) { Text(stringResource(R.string.space_details)) } }
+                    }
+                    DetailLinks.web(state.info?.website)?.let { website ->
                         item {
                             val uriHandler = LocalUriHandler.current
                             OutlinedButton(onClick = { uriHandler.openUri(website) }) {
