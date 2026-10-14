@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import java.net.URI
 import java.util.Date
 import java.util.Locale
+import java.time.Instant
+import net.grafixmafia.spacestatekit.ObservationFreshness
+import androidx.compose.runtime.remember
 import net.grafixmafia.spacestate.R
 import net.grafixmafia.spacestate.status.StatusUiState
 
@@ -60,8 +63,11 @@ fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: ()
         ) {
             LazyColumn(Modifier.fillMaxSize()) {
                 item { Header(state) }
+                if (state.info != null && (state.error != null || state.freshness != ObservationFreshness.CURRENT)) {
+                    item { Text(stringResource(R.string.last_known_details), modifier = Modifier.padding(horizontal = 16.dp)) }
+                }
                 val message = state.info?.message
-                if (message != null && state.error == null) {
+                if (message != null) {
                     item {
                         Text(
                             message,
@@ -71,9 +77,19 @@ fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: ()
                         )
                     }
                 }
-                if (state.rooms.isNotEmpty()) {
-                    item { SectionTitle(stringResource(R.string.rooms)) }
-                    items(state.rooms, key = { it.id }) { room ->
+                if (state.rooms.isNotEmpty() || state.roomsTiming != null || state.roomsError != null) {
+                    item {
+                        SectionTitle(stringResource(R.string.rooms))
+                        ObservationTime(R.string.observed, state.roomsTiming?.observedAt)
+                        if (!state.roomsCurrent && state.rooms.isNotEmpty()) {
+                            Text(stringResource(R.string.last_known_rooms), modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                        state.roomsError?.let { Text(it.text, modifier = Modifier.padding(16.dp)) }
+                    }
+                    if (state.rooms.isEmpty() && state.roomsError == null) {
+                        item { Text(stringResource(R.string.no_rooms), modifier = Modifier.padding(16.dp)) }
+                    }
+                    items(state.displayRooms, key = { it.id }) { room ->
                         ListItem(
                             leadingContent = { StatusDot(room.state.color) },
                             headlineContent = { Text(room.name) },
@@ -101,17 +117,9 @@ fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: ()
                         )
                     }
                 }
-                state.lastUpdate?.let { lastUpdate ->
-                    item {
-                        val time = DateFormat.getTimeFormat(LocalContext.current).format(Date.from(lastUpdate))
-                        Text(
-                            stringResource(R.string.updated, time),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp),
-                        )
-                    }
-                }
+                item { ObservationTime(R.string.observed, state.spaceTiming?.observedAt) }
+                state.lastUpdate?.let { date -> item { ObservationTime(R.string.received, date) } }
+                state.lastAttempt?.let { date -> item { ObservationTime(R.string.checked, date) } }
             }
         }
     }
@@ -129,7 +137,7 @@ private fun Header(state: StatusUiState) {
         Column {
             Text(status.title, style = MaterialTheme.typography.headlineSmall, color = status.color)
             val since = state.info?.lastChange
-            if (since != null && state.error == null) {
+            if (since != null && since <= state.evaluatedAt && status != net.grafixmafia.spacestatekit.SpaceStatus.UNKNOWN) {
                 val relative = DateUtils.getRelativeTimeSpanString(
                     since.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
                 ).toString().replaceFirstChar { it.lowercase(Locale.getDefault()) } // "Vor 5 Minuten" mid-sentence
@@ -155,3 +163,21 @@ fun SectionTitle(title: String) {
 
 /** The endpoint's host, shown until the space's name is known. */
 fun hostOf(endpoint: String): String = runCatching { URI(endpoint).host }.getOrNull() ?: endpoint
+
+
+/** Include date as well as time so a retained observation from yesterday is clear. */
+@Composable
+fun ObservationTime(label: Int, date: Instant?, modifier: Modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+    val context = LocalContext.current
+    val formatted = remember(context, date) {
+        date?.let { runCatching {
+            DateFormat.getMediumDateFormat(context).format(Date.from(it)) + ", " + DateFormat.getTimeFormat(context).format(Date.from(it))
+        }.getOrNull() }
+    }
+    Text(
+        if (formatted != null) stringResource(label, formatted) else stringResource(R.string.no_observation),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}

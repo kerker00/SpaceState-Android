@@ -3,11 +3,11 @@ package net.grafixmafia.spacestate.directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.grafixmafia.spacestate.FakeSource
+import net.grafixmafia.spacestate.TestViewModels
 import net.grafixmafia.spacestatekit.DirectoryEntry
 import net.grafixmafia.spacestatekit.SpaceStateException
 import net.grafixmafia.spacestatekit.SpaceStatus
@@ -20,6 +20,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class DirectoryTest {
     private val dispatcher = StandardTestDispatcher()
+    private val models = TestViewModels()
 
     private val entries = listOf(
         DirectoryEntry("https://a.example/", "Mainframe", "Bahnhofsplatz 10, 26122 Oldenburg, Germany", SpaceStatus.OPEN),
@@ -41,19 +42,19 @@ class DirectoryTest {
         assertEquals(listOf("LeineLab"), entries.matching(" leine ").map { it.name })
     }
 
-    @Test fun loadsOnceAndRetriesAfterFailure() = runTest(dispatcher) {
+    @Test fun loadsOnceAndRetriesAfterFailure() = models.run(dispatcher) {
         val source = FakeSource().apply { directory = Result.failure(SpaceStateException.Unreachable()) }
-        val model = DirectoryViewModel(source)
+        val model = models.track(DirectoryViewModel(source))
 
         model.loadIfNeeded()
-        advanceUntilIdle()
+        runCurrent()
         assertTrue(model.state.value.error is SpaceStateException.Unreachable)
 
         source.directory = Result.success(entries)
         model.load()
-        advanceUntilIdle()
+        runCurrent()
         model.loadIfNeeded()
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(entries, model.state.value.entries)
         assertEquals(2, source.directoryReads)

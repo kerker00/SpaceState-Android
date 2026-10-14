@@ -51,7 +51,10 @@ private fun SpaceStateApp() {
     // Polls while the app is visible.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { status.poll() }
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            directory.recheck()
+            status.poll()
+        }
     }
 
     val navController = rememberNavController()

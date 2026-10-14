@@ -39,4 +39,12 @@
     <string name="error_invalid_data">Die Daten konnten nicht gelesen werden.</string>
     <string name="error_invalid_endpoint">Die Adresse des Space ist ungültig.</string>
     <string name="error_other">Etwas ist schiefgegangen (%1$s).</string>
+
+    <string name="observed">Stand: %1$s</string>
+    <string name="received">Abgerufen: %1$s</string>
+    <string name="checked">Zuletzt geprüft: %1$s</string>
+    <string name="no_observation">Kein belegter Stand</string>
+    <string name="last_known_details">Letzte bekannte Details; kein aktueller Öffnungsstatus</string>
+    <string name="last_known_rooms">Letzte bekannte Räume; aktuelle Zustände unbekannt</string>
+    <string name="no_rooms">Keine Raumdaten</string>
 </resources>
