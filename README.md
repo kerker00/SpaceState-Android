@@ -18,6 +18,10 @@ Home screen widgets and push notifications are not implemented in this version.
 English/German status labels, Mainframe room names, product names and observation
 terms follow the [shared terminology](https://github.com/kerker00/SpaceState/blob/dev/docs/TERMINOLOGY.md).
 
+The Compose interface uses shared card, spacing and status-color roles, with
+paper/slate and amber fallback themes and Android wallpaper colors by default.
+Appearance, accessibility choices and debug-only previews: [docs/DESIGN.md](docs/DESIGN.md).
+
 ## Shared code
 
 The app uses [SpaceStateKit](https://github.com/kerker00/SpaceStateKit), the same Swift package as the Apple apps, compiled for Android with the Swift SDK for Android and bridged to Kotlin with swift-java (see SpaceStateKit's `Android/`).
@@ -48,9 +52,9 @@ git -C ../SpaceStateKit switch --detach 1a2e7b04cadf0ecdb0727f1fe9647078cfa2afee
 ```
 
 This build generates real Java/JNI bindings and packages both configured ABIs.
-Host Swift CI cannot establish Kotlin/JNI compatibility. Until the native build
-is verified, this app change remains a draft; its JVM regressions are prepared,
-not yet executed. Once their execution is authorized, the standard task is
+Host Swift CI cannot establish Kotlin/JNI compatibility. Validate changes with
+the native app/test-bundle build on the paired sources before integration.
+Once test execution is authorized, the standard task is
 `./gradlew :app:testDebugUnitTest`. Tests use fake providers and virtual time,
 without native client calls, production requests or app launches.
 
