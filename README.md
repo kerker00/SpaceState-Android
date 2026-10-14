@@ -37,8 +37,8 @@ version 0.3.2; **the composite build uses the actual sibling source and does not
 pin or download an AAR by that version**.
 
 This detail-view branch requires the matching `feat/android-space-details`
-source from SpaceStateKit: [Kit PR #9](https://github.com/kerker00/SpaceStateKit/pull/9),
-exact source commit `3fc29f8deaf9acf79bc16b04b4d320b3292a5146`. Neither the Android observation facade nor these detail
+source from SpaceStateKit: [Kit getter fix](https://github.com/kerker00/SpaceStateKit/pull/10),
+exact source commit `434a8648c4d1c0c9e062bf63316de26e0064181a`. Neither the Android observation facade nor these detail
 exports are in the published 0.3.2 tag. Select the exact paired Kit/app commits
 from their PR validation notes for the composite build; the coordinate alone does
 not pin source. Keep the Linux workspace independent of Apple/CLI dependency
