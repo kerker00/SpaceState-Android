@@ -11,7 +11,7 @@
     <string name="room_member">Members only</string>
     <string name="room_open">Open</string>
     <string name="room_open_plus">Open+</string>
-    <string name="room_closing">Closing</string>
+    <string name="room_closing">Closing soon</string>
     <string name="room_unknown">Unknown (%1$s)</string>
 
     <!-- %1$s is a relative time such as "5 minutes ago". -->
