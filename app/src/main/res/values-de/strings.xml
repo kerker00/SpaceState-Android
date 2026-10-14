@@ -47,4 +47,5 @@
     <string name="last_known_details">Letzte bekannte Details; kein aktueller Öffnungsstatus</string>
     <string name="last_known_rooms">Letzte bekannte Räume; aktuelle Zustände unbekannt</string>
     <string name="no_rooms">Keine Raumdaten</string>
+    <string name="no_spaces_found">Keine Spaces gefunden</string>
 </resources>

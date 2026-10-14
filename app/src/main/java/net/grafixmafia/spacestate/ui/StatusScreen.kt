@@ -3,51 +3,56 @@ package net.grafixmafia.spacestate.ui
 import android.text.format.DateFormat
 import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import java.net.URI
+import java.time.Instant
 import java.util.Date
 import java.util.Locale
-import java.time.Instant
-import net.grafixmafia.spacestatekit.ObservationFreshness
-import androidx.compose.runtime.remember
 import net.grafixmafia.spacestate.R
 import net.grafixmafia.spacestate.status.StatusUiState
+import net.grafixmafia.spacestatekit.ObservationFreshness
+import net.grafixmafia.spacestatekit.SpaceStatus
 
-/** The app's main screen: the selected space's state and, for Mainframe, its rooms. */
+/** Selected space and independent room evidence, on the shared card surface. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.info?.name ?: state.endpoint?.let(::hostOf).orEmpty()) },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings))
@@ -61,65 +66,80 @@ fun StatusScreen(state: StatusUiState, onRefresh: () -> Unit, onOpenSettings: ()
             onRefresh = onRefresh,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                item { Header(state) }
-                if (state.info != null && (state.error != null || state.freshness != ObservationFreshness.CURRENT)) {
-                    item { Text(stringResource(R.string.last_known_details), modifier = Modifier.padding(horizontal = 16.dp)) }
-                }
-                val message = state.info?.message
-                if (message != null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                LazyColumn(
+                    modifier = Modifier.widthIn(max = 720.dp).fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                     item {
-                        Text(
-                            message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
-                }
-                if (state.rooms.isNotEmpty() || state.roomsTiming != null || state.roomsError != null) {
-                    item {
-                        SectionTitle(stringResource(R.string.rooms))
-                        ObservationTime(R.string.observed, state.roomsTiming?.observedAt)
-                        if (!state.roomsCurrent && state.rooms.isNotEmpty()) {
-                            Text(stringResource(R.string.last_known_rooms), modifier = Modifier.padding(horizontal = 16.dp))
+                        SpaceCard {
+                            SpaceHeading(state.info?.name ?: state.endpoint?.let(::hostOf).orEmpty())
+                            Header(state)
+                            if (state.info != null && (state.error != null || state.freshness != ObservationFreshness.CURRENT)) {
+                                Text(stringResource(R.string.last_known_details), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            state.info?.message?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                         }
-                        state.roomsError?.let { Text(it.text, modifier = Modifier.padding(16.dp)) }
                     }
-                    if (state.rooms.isEmpty() && state.roomsError == null) {
-                        item { Text(stringResource(R.string.no_rooms), modifier = Modifier.padding(16.dp)) }
+                    state.error?.let { error ->
+                        item { SpaceErrorCard(error.text, onRefresh, enabled = !state.isRefreshing) }
                     }
-                    items(state.displayRooms, key = { it.id }) { room ->
-                        ListItem(
-                            leadingContent = { StatusDot(room.state.color) },
-                            headlineContent = { Text(room.name) },
-                            trailingContent = { Text(room.stateTitle) },
-                        )
+                    if (state.rooms.isNotEmpty() || state.roomsTiming != null || state.roomsError != null) {
+                        item {
+                            SpaceCard {
+                                SpaceHeading(stringResource(R.string.rooms))
+                                ObservationTime(R.string.observed, state.roomsTiming?.observedAt)
+                                state.roomsLastUpdate?.let { ObservationTime(R.string.received, it) }
+                                state.roomsLastAttempt?.let { ObservationTime(R.string.checked, it) }
+                                if (!state.roomsCurrent && state.rooms.isNotEmpty()) {
+                                    Text(stringResource(R.string.last_known_rooms), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (state.rooms.isEmpty() && state.roomsError == null) {
+                                    Text(stringResource(R.string.no_rooms))
+                                }
+                                state.roomsError?.let { error ->
+                                    Text(error.text, color = MaterialTheme.colorScheme.onSurface)
+                                    TextButton(onClick = onRefresh, enabled = !state.isRefreshing) {
+                                        Text(stringResource(R.string.try_again))
+                                    }
+                                }
+                                state.displayRooms.forEach { room ->
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.semantics(mergeDescendants = true) {},
+                                    ) {
+                                        Text(room.name, style = MaterialTheme.typography.titleSmall)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            StatusDot(room.state.color)
+                                            Text(room.stateTitle, color = room.state.color, style = MaterialTheme.typography.bodyMedium)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-                state.error?.let { error ->
+                    state.info?.website?.let { website ->
+                        item {
+                            val uriHandler = LocalUriHandler.current
+                            OutlinedButton(onClick = { uriHandler.openUri(website) }) {
+                                Icon(Icons.Outlined.OpenInBrowser, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                                Text(stringResource(R.string.website))
+                            }
+                        }
+                    }
                     item {
-                        HorizontalDivider()
-                        ListItem(
-                            leadingContent = { Icon(Icons.Outlined.ErrorOutline, contentDescription = null) },
-                            headlineContent = { Text(error.text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        )
+                        SpaceCard {
+                            ObservationTime(R.string.observed, state.spaceTiming?.observedAt)
+                            state.lastUpdate?.let { ObservationTime(R.string.received, it) }
+                            state.lastAttempt?.let { ObservationTime(R.string.checked, it) }
+                        }
                     }
                 }
-                state.info?.website?.let { website ->
-                    item {
-                        val uriHandler = LocalUriHandler.current
-                        HorizontalDivider()
-                        ListItem(
-                            leadingContent = { Icon(Icons.Outlined.OpenInBrowser, contentDescription = null) },
-                            headlineContent = { Text(stringResource(R.string.website)) },
-                            modifier = Modifier.clickableListItem { uriHandler.openUri(website) },
-                        )
-                    }
-                }
-                item { ObservationTime(R.string.observed, state.spaceTiming?.observedAt) }
-                state.lastUpdate?.let { date -> item { ObservationTime(R.string.received, date) } }
-                state.lastAttempt?.let { date -> item { ObservationTime(R.string.checked, date) } }
             }
         }
     }
@@ -131,16 +151,19 @@ private fun Header(state: StatusUiState) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) {},
     ) {
-        Icon(status.icon, contentDescription = null, tint = status.color, modifier = Modifier.size(48.dp))
-        Column {
-            Text(status.title, style = MaterialTheme.typography.headlineSmall, color = status.color)
+        // At large font sizes the status word has priority over a decorative symbol.
+        if (LocalDensity.current.fontScale < 1.5f) {
+            Icon(status.icon, contentDescription = null, tint = status.color, modifier = Modifier.size(48.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(status.title, style = MaterialTheme.typography.headlineMedium, color = status.color)
             val since = state.info?.lastChange
-            if (since != null && since <= state.evaluatedAt && status != net.grafixmafia.spacestatekit.SpaceStatus.UNKNOWN) {
+            if (since != null && since <= state.evaluatedAt && status != SpaceStatus.UNKNOWN) {
                 val relative = DateUtils.getRelativeTimeSpanString(
-                    since.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
-                ).toString().replaceFirstChar { it.lowercase(Locale.getDefault()) } // "Vor 5 Minuten" mid-sentence
+                    since.toEpochMilli(), state.evaluatedAt.toEpochMilli(), DateUtils.MINUTE_IN_MILLIS,
+                ).toString().replaceFirstChar { it.lowercase(Locale.getDefault()) }
                 Text(
                     stringResource(R.string.changed, relative),
                     style = MaterialTheme.typography.bodyMedium,
@@ -151,23 +174,12 @@ private fun Header(state: StatusUiState) {
     }
 }
 
-@Composable
-fun SectionTitle(title: String) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
-}
-
 /** The endpoint's host, shown until the space's name is known. */
 fun hostOf(endpoint: String): String = runCatching { URI(endpoint).host }.getOrNull() ?: endpoint
 
-
-/** Include date as well as time so a retained observation from yesterday is clear. */
+/** Include the date so a retained observation from yesterday is clear. */
 @Composable
-fun ObservationTime(label: Int, date: Instant?, modifier: Modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+fun ObservationTime(label: Int, date: Instant?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val formatted = remember(context, date) {
         date?.let { runCatching {
