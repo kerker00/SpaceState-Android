@@ -10,10 +10,10 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.grafixmafia.spacestate.FakeSettings
 import net.grafixmafia.spacestate.FakeSource
+import net.grafixmafia.spacestate.TestViewModels
 import net.grafixmafia.spacestate.MAINFRAME
 import net.grafixmafia.spacestate.LEINELAB
 import net.grafixmafia.spacestate.space
@@ -33,6 +33,7 @@ import org.junit.Assert.*
 @OptIn(ExperimentalCoroutinesApi::class)
 class ObservationViewModelTest {
     private val dispatcher = StandardTestDispatcher()
+    private val models = TestViewModels()
     private val source = FakeSource()
     private val settings = FakeSettings()
     private fun timing(observed: Long? = 0, expiry: Long? = 900) = ObservationTiming(
@@ -40,12 +41,12 @@ class ObservationViewModelTest {
     private fun TestScope.model(): StatusViewModel {
         source.now = { Instant.ofEpochMilli(testScheduler.currentTime) }
         source.spaces[MAINFRAME] = space(MAINFRAME, "A")
-        return StatusViewModel(source, settings, source.now).also { runCurrent() }
+        return models.track(StatusViewModel(source, settings, source.now)).also { runCurrent() }
     }
     @Before fun start() = Dispatchers.setMain(dispatcher)
     @After fun stop() = Dispatchers.resetMain()
 
-    @Test fun expiresBeforeTheNextPollWithoutChangingSourceOrAttempt() = runTest(dispatcher) {
+    @Test fun expiresBeforeTheNextPollWithoutChangingSourceOrAttempt() = models.run(dispatcher) {
         val model = model()
         source.spaceObservations[MAINFRAME] = StatusObservation(space(MAINFRAME, "A"), timing(expiry = 2))
         settings.settings.value = settings.settings.value.copy(refreshSeconds = 900)
@@ -61,7 +62,7 @@ class ObservationViewModelTest {
         polling.cancel()
     }
 
-    @Test fun failedSpaceReadKeepsOriginalEvidenceAndSuccessfulCompletion() = runTest(dispatcher) {
+    @Test fun failedSpaceReadKeepsOriginalEvidenceAndSuccessfulCompletion() = models.run(dispatcher) {
         val model = model(); model.refresh(); runCurrent()
         val original = model.state.value
         advanceTimeBy(1000); runCurrent()
@@ -74,7 +75,7 @@ class ObservationViewModelTest {
         assertEquals(SpaceStatus.UNKNOWN, model.state.value.status)
     }
 
-    @Test fun failedRoomsKeepNamesAndMakeOnlyTheirStatesUnknown() = runTest(dispatcher) {
+    @Test fun failedRoomsKeepNamesAndMakeOnlyTheirStatesUnknown() = models.run(dispatcher) {
         val model = model()
         source.rooms = Result.success(listOf(room("space", MainframeRoomState.OPEN_PLUS)))
         model.refresh(); runCurrent()
@@ -90,7 +91,7 @@ class ObservationViewModelTest {
         assertTrue(model.state.value.roomsError is SpaceStateException.Timeout)
     }
 
-    @Test fun freshRoomsRemainCurrentWhenTheSpaceFails() = runTest(dispatcher) {
+    @Test fun freshRoomsRemainCurrentWhenTheSpaceFails() = models.run(dispatcher) {
         val model = model()
         source.spaces[MAINFRAME] = SpaceStateException.Unreachable()
         source.rooms = Result.success(listOf(room("space", MainframeRoomState.OPEN)))
@@ -101,7 +102,7 @@ class ObservationViewModelTest {
         assertEquals(Instant.EPOCH, model.state.value.roomsLastUpdate)
     }
 
-    @Test fun roomExpiryIsIndependentOfSpaceExpiry() = runTest(dispatcher) {
+    @Test fun roomExpiryIsIndependentOfSpaceExpiry() = models.run(dispatcher) {
         val model = model()
         val rooms = listOf(room("space", MainframeRoomState.OPEN))
         source.rooms = Result.success(rooms)
@@ -116,7 +117,7 @@ class ObservationViewModelTest {
         assertEquals(1, source.spaceReads.size)
     }
 
-    @Test fun aSlowRoomReadDoesNotDelayPublishingTheSpace() = runTest(dispatcher) {
+    @Test fun aSlowRoomReadDoesNotDelayPublishingTheSpace() = models.run(dispatcher) {
         val model = model(); source.roomGate = CompletableDeferred()
         model.refresh(); runCurrent()
         assertEquals(SpaceStatus.OPEN, model.state.value.status)
@@ -125,7 +126,7 @@ class ObservationViewModelTest {
         assertFalse(model.state.value.isRefreshing)
     }
 
-    @Test fun sourceObservationReceiptCompletionAndAttemptStaySeparate() = runTest(dispatcher) {
+    @Test fun sourceObservationReceiptCompletionAndAttemptStaySeparate() = models.run(dispatcher) {
         val model = model()
         advanceTimeBy(1000); runCurrent()
         source.spaceObservations[MAINFRAME] = StatusObservation(space(MAINFRAME, "A"), ObservationTiming(
@@ -137,7 +138,7 @@ class ObservationViewModelTest {
         assertEquals(Instant.ofEpochSecond(1), model.state.value.lastAttempt)
     }
 
-    @Test fun firstFailureCreatesNoSuccessfulObservation() = runTest(dispatcher) {
+    @Test fun firstFailureCreatesNoSuccessfulObservation() = models.run(dispatcher) {
         val model = model(); source.spaces[MAINFRAME] = SpaceStateException.Timeout()
         model.refresh(); runCurrent()
         assertNull(model.state.value.spaceTiming)
@@ -145,7 +146,7 @@ class ObservationViewModelTest {
         assertEquals(Instant.EPOCH, model.state.value.lastAttempt)
     }
 
-    @Test fun missingEvidenceNeverCountsAsCurrentOpening() = runTest(dispatcher) {
+    @Test fun missingEvidenceNeverCountsAsCurrentOpening() = models.run(dispatcher) {
         val model = model()
         source.spaceObservations[MAINFRAME] = StatusObservation(space(MAINFRAME, "A"), timing(observed = null, expiry = null))
         model.refresh(); runCurrent()
@@ -154,7 +155,7 @@ class ObservationViewModelTest {
         assertNull(model.state.value.error)
     }
 
-    @Test fun selectionResetClearsAllEvidenceAndErrors() = runTest(dispatcher) {
+    @Test fun selectionResetClearsAllEvidenceAndErrors() = models.run(dispatcher) {
         val model = model(); model.refresh(); runCurrent()
         model.selectSpace(LEINELAB); runCurrent()
         assertNull(model.state.value.info)
@@ -168,7 +169,7 @@ class ObservationViewModelTest {
         assertEquals(LEINELAB, model.state.value.endpoint)
     }
 
-    @Test fun returnChecksExpiredDataBeforeWaitingForANewRead() = runTest(dispatcher) {
+    @Test fun returnChecksExpiredDataBeforeWaitingForANewRead() = models.run(dispatcher) {
         val model = model(); model.refresh(); runCurrent()
         advanceTimeBy(900_000); runCurrent()
         source.gates[MAINFRAME] = CompletableDeferred()
@@ -178,7 +179,7 @@ class ObservationViewModelTest {
         polling.cancel()
     }
 
-    @Test fun repeatedManualRefreshesShareOnePendingAttempt() = runTest(dispatcher) {
+    @Test fun repeatedManualRefreshesShareOnePendingAttempt() = models.run(dispatcher) {
         val model = model(); source.gates[MAINFRAME] = CompletableDeferred()
         model.refresh(); model.refresh(); runCurrent()
         assertEquals(1, source.spaceReads.size)
@@ -188,7 +189,7 @@ class ObservationViewModelTest {
         assertEquals(1, source.spaceReads.size)
     }
 
-    @Test fun lateReadCannotRepopulateAnEndpointSelectedAgain() = runTest(dispatcher) {
+    @Test fun lateReadCannotRepopulateAnEndpointSelectedAgain() = models.run(dispatcher) {
         val model = model()
         val gate = CompletableDeferred<Unit>()
         source.ignoresCancellation = true
@@ -206,11 +207,11 @@ class ObservationViewModelTest {
         assertFalse(model.state.value.isRefreshing)
     }
 
-    @Test fun clockRollbackIsUnknownWithoutChangingOriginalEvidence() = runTest(dispatcher) {
+    @Test fun clockRollbackIsUnknownWithoutChangingOriginalEvidence() = models.run(dispatcher) {
         var clock = Instant.ofEpochSecond(100)
         source.now = { clock }
         source.spaces[MAINFRAME] = space(MAINFRAME, "A")
-        val model = StatusViewModel(source, settings, source.now); runCurrent()
+        val model = models.track(StatusViewModel(source, settings, source.now)); runCurrent()
         model.refresh(); runCurrent()
         val original = model.state.value.spaceTiming
         clock = Instant.ofEpochSecond(99)

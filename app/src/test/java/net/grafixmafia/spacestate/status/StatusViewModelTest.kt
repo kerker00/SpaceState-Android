@@ -10,10 +10,10 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.grafixmafia.spacestate.FakeSettings
 import net.grafixmafia.spacestate.FakeSource
+import net.grafixmafia.spacestate.TestViewModels
 import net.grafixmafia.spacestate.LEINELAB
 import net.grafixmafia.spacestate.MAINFRAME
 import net.grafixmafia.spacestate.room
@@ -32,6 +32,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class StatusViewModelTest {
     private val dispatcher = StandardTestDispatcher()
+    private val models = TestViewModels()
     private val source = FakeSource()
     private val settings = FakeSettings()
 
@@ -42,10 +43,10 @@ class StatusViewModelTest {
     /** A model that has read the settings, as it has by the time the user can act. */
     private fun TestScope.model(): StatusViewModel {
         source.now = { Instant.ofEpochMilli(testScheduler.currentTime) }
-        return StatusViewModel(source, settings, now = source.now).also { runCurrent() }
+        return models.track(StatusViewModel(source, settings, now = source.now)).also { runCurrent() }
     }
 
-    @Test fun showsSpaceWithMainframeRooms() = runTest(dispatcher) {
+    @Test fun showsSpaceWithMainframeRooms() = models.run(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         source.rooms = Result.success(listOf(room("space", MainframeRoomState.OPEN_PLUS)))
         val model = model()
@@ -60,7 +61,7 @@ class StatusViewModelTest {
         assertFalse(state.isRefreshing)
     }
 
-    @Test fun failingRoomsDoNotHideTheSpace() = runTest(dispatcher) {
+    @Test fun failingRoomsDoNotHideTheSpace() = models.run(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         source.rooms = Result.failure(SpaceStateException.Timeout())
         val model = model()
@@ -73,7 +74,7 @@ class StatusViewModelTest {
         assertNull(model.state.value.error)
     }
 
-    @Test fun otherSpacesLoadNoRooms() = runTest(dispatcher) {
+    @Test fun otherSpacesLoadNoRooms() = models.run(dispatcher) {
         settings.settings.value = settings.settings.value.copy(endpoint = LEINELAB)
         source.spaces[LEINELAB] = space(LEINELAB, "LeineLab")
         val model = model()
@@ -85,7 +86,7 @@ class StatusViewModelTest {
         assertEquals(0, source.roomReads)
     }
 
-    @Test fun failureShowsUnknownButKeepsLastInfo() = runTest(dispatcher) {
+    @Test fun failureShowsUnknownButKeepsLastInfo() = models.run(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         val model = model()
         model.refresh()
@@ -101,7 +102,7 @@ class StatusViewModelTest {
         assertTrue(state.error is SpaceStateException.Unreachable)
     }
 
-    @Test fun choosingAnotherSpaceClearsTheOldOne() = runTest(dispatcher) {
+    @Test fun choosingAnotherSpaceClearsTheOldOne() = models.run(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         val model = model()
         model.refresh()
@@ -115,7 +116,7 @@ class StatusViewModelTest {
         assertEquals(SpaceStatus.UNKNOWN, model.state.value.status)
     }
 
-    @Test fun lateAnswerForThePreviousSpaceIsDropped() = runTest(dispatcher) {
+    @Test fun lateAnswerForThePreviousSpaceIsDropped() = models.run(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         source.gates[MAINFRAME] = gate
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
@@ -132,7 +133,7 @@ class StatusViewModelTest {
         assertNull(model.state.value.info)
     }
 
-    @Test fun pollingRefreshesEveryInterval() = runTest(dispatcher) {
+    @Test fun pollingRefreshesEveryInterval() = models.run(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         settings.settings.value = settings.settings.value.copy(refreshSeconds = 60)
         val model = model()

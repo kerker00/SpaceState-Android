@@ -86,6 +86,12 @@ android {
     }
 }
 
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    testLogging {
+        events("started", "passed", "skipped", "failed")
+    }
+}
+
 dependencies {
     implementation(libs.spacestatekit)
     implementation(platform(libs.androidx.compose.bom))

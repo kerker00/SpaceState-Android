@@ -9,9 +9,9 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.grafixmafia.spacestate.FakeSource
+import net.grafixmafia.spacestate.TestViewModels
 import net.grafixmafia.spacestatekit.DirectoryEntry
 import net.grafixmafia.spacestatekit.ObservationTiming
 import net.grafixmafia.spacestatekit.ObservationSource
@@ -26,6 +26,7 @@ import org.junit.Assert.*
 @OptIn(ExperimentalCoroutinesApi::class)
 class DirectoryObservationTest {
     private val dispatcher = StandardTestDispatcher()
+    private val models = TestViewModels()
     private val source = FakeSource()
     private val entry = DirectoryEntry("https://a.example/api", "A", "Oldenburg", SpaceStatus.OPEN)
     private fun timing(observed: Long? = 0, received: Long = 0, expiry: Long? = 900) = ObservationTiming(
@@ -34,12 +35,12 @@ class DirectoryObservationTest {
         source.now = { Instant.ofEpochMilli(testScheduler.currentTime) }
         source.directory = Result.success(listOf(entry))
         source.directoryObservations = listOf(StatusObservation(entry, timing()))
-        return DirectoryViewModel(source, source.now)
+        return models.track(DirectoryViewModel(source, source.now))
     }
     @Before fun start() = Dispatchers.setMain(dispatcher)
     @After fun stop() = Dispatchers.resetMain()
 
-    @Test fun directoryExpiresWithoutDownloadingOrRestampingItsEvidence() = runTest(dispatcher) {
+    @Test fun directoryExpiresWithoutDownloadingOrRestampingItsEvidence() = models.run(dispatcher) {
         val model = model(); source.directoryObservations = listOf(StatusObservation(entry, timing(expiry = 2)))
         model.load(); runCurrent()
         val original = model.state.value
@@ -51,7 +52,7 @@ class DirectoryObservationTest {
         assertEquals(1, source.directoryReads)
     }
 
-    @Test fun currentMissingFutureStaleAndUnreachableEntriesAreIndependent() = runTest(dispatcher) {
+    @Test fun currentMissingFutureStaleAndUnreachableEntriesAreIndependent() = models.run(dispatcher) {
         advanceTimeBy(10_000); runCurrent()
         val model = model()
         val names = listOf("Current", "Missing", "Future", "Stale", "Unreachable")
@@ -65,7 +66,7 @@ class DirectoryObservationTest {
         assertEquals(names, model.state.value.entries.map { it.name })
     }
 
-    @Test fun failedRefreshKeepsSearchableNamesWithoutCurrentFlags() = runTest(dispatcher) {
+    @Test fun failedRefreshKeepsSearchableNamesWithoutCurrentFlags() = models.run(dispatcher) {
         val model = model(); model.load(); runCurrent()
         val original = model.state.value
         advanceTimeBy(1000); runCurrent()
@@ -79,7 +80,7 @@ class DirectoryObservationTest {
         assertEquals("A", model.state.value.displayEntries.matching("olden").single().name)
     }
 
-    @Test fun cancellationDoesNotCreateFailureOrSuccessfulReceipt() = runTest(dispatcher) {
+    @Test fun cancellationDoesNotCreateFailureOrSuccessfulReceipt() = models.run(dispatcher) {
         val model = model(); model.load(); runCurrent()
         val original = model.state.value
         advanceTimeBy(1000); runCurrent()
@@ -91,7 +92,7 @@ class DirectoryObservationTest {
         assertFalse(model.state.value.isLoading)
     }
 
-    @Test fun cachedNamesOnReturnDoNotExtendTheirStates() = runTest(dispatcher) {
+    @Test fun cachedNamesOnReturnDoNotExtendTheirStates() = models.run(dispatcher) {
         val model = model(); source.directoryObservations = listOf(StatusObservation(entry, timing(expiry = 2)))
         model.load(); runCurrent()
         advanceTimeBy(3000); runCurrent()
@@ -101,13 +102,13 @@ class DirectoryObservationTest {
         assertEquals(Instant.EPOCH, model.state.value.timings[entry.endpoint]?.observedAt)
     }
 
-    @Test fun repeatedLoadRequestsDoNotOverlap() = runTest(dispatcher) {
+    @Test fun repeatedLoadRequestsDoNotOverlap() = models.run(dispatcher) {
         val model = model(); model.load(); model.load(); runCurrent()
         assertEquals(1, source.directoryReads)
         assertFalse(model.state.value.isLoading)
     }
 
-    @Test fun firstFailureProvidesAttemptWithoutSourceOrSuccessTime() = runTest(dispatcher) {
+    @Test fun firstFailureProvidesAttemptWithoutSourceOrSuccessTime() = models.run(dispatcher) {
         val model = model(); source.directory = Result.failure(SpaceStateException.Timeout())
         model.load(); runCurrent()
         assertNull(model.state.value.lastUpdate)
