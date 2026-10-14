@@ -43,4 +43,12 @@
     <string name="error_invalid_data">The data could not be read.</string>
     <string name="error_invalid_endpoint">The space\'s address is invalid.</string>
     <string name="error_other">Something went wrong (%1$s).</string>
+
+    <string name="observed">Observed %1$s</string>
+    <string name="received">Received %1$s</string>
+    <string name="checked">Last checked %1$s</string>
+    <string name="no_observation">No confirmed observation</string>
+    <string name="last_known_details">Last known details; no current opening state</string>
+    <string name="last_known_rooms">Last known rooms; current states unavailable</string>
+    <string name="no_rooms">No room data</string>
 </resources>

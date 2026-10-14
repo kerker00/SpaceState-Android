@@ -14,7 +14,7 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 
 [libraries]
-spacestatekit = { group = "net.grafixmafia", name = "spacestatekit-android", version = "0.3.0" }
+spacestatekit = { group = "net.grafixmafia", name = "spacestatekit-android", version = "0.3.2" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }

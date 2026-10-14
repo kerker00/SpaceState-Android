@@ -63,7 +63,7 @@ val MainframeRoom.stateTitle: String
         MainframeRoomState.OPEN -> stringResource(R.string.room_open)
         MainframeRoomState.OPEN_PLUS -> stringResource(R.string.room_open_plus)
         MainframeRoomState.CLOSING -> stringResource(R.string.room_closing)
-        MainframeRoomState.UNKNOWN -> stringResource(R.string.room_unknown, rawState)
+        MainframeRoomState.UNKNOWN -> if (rawState.isBlank()) stringResource(R.string.status_unknown) else stringResource(R.string.room_unknown, rawState)
     }
 
 /** Keyholders, members and closing are neither open to guests nor fully closed. */

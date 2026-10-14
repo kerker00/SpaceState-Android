@@ -1,6 +1,12 @@
 package net.grafixmafia.spacestate
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import java.time.Instant
+import net.grafixmafia.spacestatekit.ObservationTiming
+import net.grafixmafia.spacestatekit.ObservationSource
+import net.grafixmafia.spacestatekit.StatusObservation
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.grafixmafia.spacestate.data.Settings
 import net.grafixmafia.spacestate.data.SettingsStore
@@ -29,6 +35,12 @@ class FakeSource : StatusSource {
     val spaceReads = mutableListOf<String>()
     var roomReads = 0
     var directoryReads = 0
+    var now: () -> Instant = { Instant.EPOCH }
+    val spaceObservations = mutableMapOf<String, StatusObservation<SpaceInfo>>()
+    var roomsObservation: StatusObservation<List<MainframeRoom>>? = null
+    var directoryObservations: List<StatusObservation<DirectoryEntry>>? = null
+    var roomGate: CompletableDeferred<Unit>? = null
+    var ignoresCancellation = false
 
     override val mainframeEndpoint = MAINFRAME
 
@@ -36,8 +48,11 @@ class FakeSource : StatusSource {
 
     override suspend fun space(endpoint: String): SpaceInfo {
         spaceReads += endpoint
-        gates[endpoint]?.await()
-        return when (val answer = spaces[endpoint]) {
+        val answer = spaces[endpoint]
+        val gate = gates[endpoint]
+        if (gate != null && ignoresCancellation) withContext(NonCancellable) { gate.await() }
+        else gate?.await()
+        return when (answer) {
             is SpaceInfo -> answer
             is Throwable -> throw answer
             else -> throw IllegalStateException("no answer for $endpoint")
@@ -46,6 +61,7 @@ class FakeSource : StatusSource {
 
     override suspend fun mainframeRooms(): List<MainframeRoom> {
         roomReads++
+        roomGate?.await()
         return rooms.getOrThrow()
     }
 
@@ -53,6 +69,29 @@ class FakeSource : StatusSource {
         directoryReads++
         return directory.getOrThrow()
     }
+
+    override suspend fun spaceObservation(endpoint: String): StatusObservation<SpaceInfo> {
+        val value = space(endpoint)
+        return spaceObservations[endpoint] ?: observed(value)
+    }
+
+    override suspend fun mainframeRoomsObservation(): StatusObservation<List<MainframeRoom>> {
+        val value = mainframeRooms()
+        return roomsObservation ?: observed(value)
+    }
+
+    override suspend fun directoryObservations(): List<StatusObservation<DirectoryEntry>> {
+        val values = directory()
+        // Old name-only fixtures have no source evidence; production never fills it.
+        return directoryObservations ?: values.map { StatusObservation(it,
+            ObservationTiming(ObservationSource.AGGREGATOR, null, now(), null)) }
+    }
+
+    private fun <T> observed(value: T): StatusObservation<T> {
+        val date = now()
+        return StatusObservation(value, ObservationTiming(ObservationSource.DIRECT, date, date, date.plusSeconds(900)))
+    }
+
 }
 
 class FakeSettings(endpoint: String = MAINFRAME, refreshSeconds: Int = 120) : SettingsStore {

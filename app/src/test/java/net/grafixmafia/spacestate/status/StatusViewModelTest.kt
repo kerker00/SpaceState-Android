@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -41,9 +40,10 @@ class StatusViewModelTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     /** A model that has read the settings, as it has by the time the user can act. */
-    private fun TestScope.model() =
-        StatusViewModel(source, settings, now = { Instant.ofEpochSecond(testScheduler.currentTime / 1000) })
-            .also { advanceUntilIdle() }
+    private fun TestScope.model(): StatusViewModel {
+        source.now = { Instant.ofEpochMilli(testScheduler.currentTime) }
+        return StatusViewModel(source, settings, now = source.now).also { runCurrent() }
+    }
 
     @Test fun showsSpaceWithMainframeRooms() = runTest(dispatcher) {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
@@ -51,7 +51,7 @@ class StatusViewModelTest {
         val model = model()
 
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         val state = model.state.value
         assertEquals("Mainframe", state.info?.name)
@@ -66,7 +66,7 @@ class StatusViewModelTest {
         val model = model()
 
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(SpaceStatus.OPEN, model.state.value.status)
         assertTrue(model.state.value.rooms.isEmpty())
@@ -79,7 +79,7 @@ class StatusViewModelTest {
         val model = model()
 
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals("LeineLab", model.state.value.info?.name)
         assertEquals(0, source.roomReads)
@@ -89,11 +89,11 @@ class StatusViewModelTest {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         val model = model()
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         source.spaces[MAINFRAME] = SpaceStateException.Unreachable()
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         val state = model.state.value
         assertEquals(SpaceStatus.UNKNOWN, state.status)
@@ -105,10 +105,10 @@ class StatusViewModelTest {
         source.spaces[MAINFRAME] = space(MAINFRAME, "Mainframe")
         val model = model()
         model.refresh()
-        advanceUntilIdle()
+        runCurrent()
 
         model.selectSpace(LEINELAB)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(LEINELAB, model.state.value.endpoint)
         assertNull(model.state.value.info)
@@ -126,7 +126,7 @@ class StatusViewModelTest {
         model.selectSpace(LEINELAB)
         runCurrent()
         gate.complete(Unit)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(LEINELAB, model.state.value.endpoint)
         assertNull(model.state.value.info)

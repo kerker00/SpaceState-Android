@@ -13,6 +13,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,7 +58,8 @@ fun SpacePickerScreen(
 ) {
     LaunchedEffect(Unit) { onAppear() }
     var query by rememberSaveable { mutableStateOf("") }
-    val entries = remember(directory.entries, query) { directory.entries.matching(query) }
+    val displayed = directory.displayEntries
+    val entries = remember(displayed, query) { displayed.matching(query) }
     val keyboard = LocalSoftwareKeyboardController.current
 
     Scaffold(
@@ -64,6 +67,11 @@ fun SpacePickerScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.choose_space)) },
                 navigationIcon = { BackButton(onBack) },
+                actions = {
+                    IconButton(onClick = onRetry, enabled = !directory.isLoading) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                    }
+                },
             )
         },
     ) { padding ->
@@ -79,6 +87,9 @@ fun SpacePickerScreen(
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            if (directory.error != null && directory.entries.isNotEmpty()) {
+                Text(directory.error.text, modifier = Modifier.padding(16.dp))
+            }
             Box(Modifier.fillMaxSize()) {
                 when {
                     directory.entries.isEmpty() && directory.isLoading ->
@@ -90,7 +101,13 @@ fun SpacePickerScreen(
                             ListItem(
                                 leadingContent = { StatusDot(entry.status.color) },
                                 headlineContent = { Text(entry.name) },
-                                supportingContent = entry.address?.let { address -> { Text(address) } },
+                                supportingContent = {
+                                    Column {
+                                        entry.address?.let { Text(it) }
+                                        Text(entry.status.title)
+                                        ObservationTime(R.string.observed, directory.timings[entry.endpoint]?.observedAt, Modifier)
+                                    }
+                                },
                                 trailingContent = if (entry.endpoint == selectedEndpoint) {
                                     {
                                         Icon(

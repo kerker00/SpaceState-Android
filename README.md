@@ -8,8 +8,9 @@ Work in progress. The Apple implementation and shared architecture are described
 
 - Any space from the SpaceAPI directory, searchable by name and address; Mainframe Oldenburg is the default.
 - Open, closed or unknown at a glance, with the time of the last change and the space's status message.
-- Mainframe's rooms (Space, Radstelle, 3D Lab, Machining) with their own states.
+- Mainframe's rooms (Space, Radstelle, 3D Lab, Machining) with independent observation times and failures.
 - State is read through [SpacePush](https://github.com/kerker00/SpacePush), with direct SpaceAPI requests as fallback; refreshed every 1 to 15 minutes while the app is visible, and by pulling down.
+- Original observation, successful receipt and last attempt shown separately. Retained expired or failed states become unknown without losing names or last known details. Directory opening flags expire independently of name search.
 - English and German; Android 13+ also offers the language per app in the system settings.
 
 Home screen widgets and push notifications are not implemented in this version.
@@ -20,16 +21,35 @@ The app uses [SpaceStateKit](https://github.com/kerker00/SpaceStateKit), the sam
 
 ## Build
 
-Requirements: Android Studio (JDK 17+), Android NDK r30, Swift 6.4 with the Swift SDK for Android.
+Requirements: a Linux Android build host, Android NDK r30, Swift 6.4 with the Swift SDK for Android, and a JDK launcher. The committed Gradle daemon configuration requests JDK 25; app and library bytecode target Java 17.
 
-Gradle currently builds `spacestatekit-android` from `../SpaceStateKit/Android`, using the release in `gradle/libs.versions.toml` (`0.3.0`). Use a dedicated Android build workspace with sibling checkouts of `SpaceState-Android` and `SpaceStateKit`, plus the required Swift Android SDK. This keeps the bridge checkout separate from the Kit checkout used for Apple/CLI development. A Kit checkout without the `Android/` directory cannot satisfy this composite build.
+Gradle builds `spacestatekit-android` from the existing sibling
+`../SpaceStateKit/Android`. The coordinate in `gradle/libs.versions.toml` describes
+version 0.3.2; **the composite build uses the actual sibling source and does not
+pin or download an AAR by that version**.
 
-From the Android checkout in that dedicated workspace, create its Kit sibling and select the matching release:
+The C-01 app changes in this branch require the additive Android observation
+facade from [Kit PR #8](https://github.com/kerker00/SpaceStateKit/pull/8), currently
+commit `1a2e7b04cadf0ecdb0727f1fe9647078cfa2afee`. These APIs are not in the
+published 0.3.2 tag. Use the paired source for branch validation; a subsequent
+release/adoption is a separate step. Keep the Linux build workspace independent
+of the Kit checkout used for Apple/CLI work.
 
-    git clone git@github.com:kerker00/SpaceStateKit.git ../SpaceStateKit
-    git -C ../SpaceStateKit switch --detach 0.3.0
-    ./gradlew :app:assembleDebug
-    ./gradlew :app:testDebugUnitTest
+From the Android checkout with an existing Kit sibling, select the paired source
+over HTTPS and build the debug app and test bundle without running tests:
+
+```sh
+git -C ../SpaceStateKit -c core.sshCommand=false fetch https://github.com/kerker00/SpaceStateKit.git feat/android-observation-freshness
+git -C ../SpaceStateKit switch --detach 1a2e7b04cadf0ecdb0727f1fe9647078cfa2afee
+./gradlew :app:assembleDebug :app:compileDebugUnitTestKotlin --no-daemon
+```
+
+This build generates real Java/JNI bindings and packages both configured ABIs.
+Host Swift CI cannot establish Kotlin/JNI compatibility. Until the native build
+is verified, this app change remains a draft; its JVM regressions are prepared,
+not yet executed. Once their execution is authorized, the standard task is
+`./gradlew :app:testDebugUnitTest`. Tests use fake providers and virtual time,
+without native client calls, production requests or app launches.
 
 The first build compiles swift-syntax for swift-java and takes several minutes.
 
