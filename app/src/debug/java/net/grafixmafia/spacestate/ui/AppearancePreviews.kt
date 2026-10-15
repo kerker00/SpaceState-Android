@@ -95,3 +95,17 @@ private fun SettingsAppearancePreview() {
         SettingsScreen(sampleState().let { it.copy(info = it.info?.copy(name = "Hackerspace mit einem sehr langen Namen")) }, {}, {}, {})
     }
 }
+
+@Preview(name = "Details DE large font", locale = "de", fontScale = 2f, widthDp = 320, heightDp = 920, showBackground = true)
+@Preview(name = "Details EN dark", locale = "en", uiMode = Configuration.UI_MODE_NIGHT_YES, widthDp = 360, heightDp = 920, showBackground = true)
+@Composable
+private fun DetailsAppearancePreview() {
+    val details = net.grafixmafia.spacestatekit.SpaceDetails(
+        accessHint = "Klingel am Seiteneingang; lange Zugangsbeschreibung mit mehreren Schritten.",
+        countryCode = "DE", latitude = 53.1, longitude = 8.2,
+        contacts = listOf(net.grafixmafia.spacestatekit.DetailContact("email", "space@example.org")),
+        projects = listOf("https://example.org/project"),
+    )
+    val state = sampleState(failed = true).let { it.copy(info = it.info?.copy(address = "Lange Adresse, Beispielstadt", details = details)) }
+    SpaceStateTheme(dynamicColor = false) { SpaceDetailsScreen(state, {}, {}) }
+}

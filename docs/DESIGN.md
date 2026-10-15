@@ -72,3 +72,24 @@ Compose layouts.
 Material behavior references: [Compose accessibility defaults](https://developer.android.com/develop/ui/compose/accessibility/api-defaults),
 [semantics](https://developer.android.com/develop/ui/compose/accessibility/semantics),
 [Material 3 and dynamic color](https://developer.android.com/develop/ui/compose/designsystems/material3).
+
+## Space details and linked spaces
+
+The details route reuses the current store's value and observation evidence,
+including explicit last known labels after failure or expiry. Optional sections
+are absent when empty. Provider names, descriptions and addresses wrap and can be
+selected/copied. Contacts and feeds keep their kind labels in DE/EN; unsafe or
+unsupported destinations remain readable text. External actions use protocol
+allowlists and report an unavailable handler through a native snackbar.
+
+Coordinates refer only to the published space location. Opening a map does not
+request or upload the device location. Linked endpoints use a separate back-stack
+ViewModel with read-only TemporarySettings; navigation never writes the main
+DataStore selection or interval. Polling follows that entry's lifecycle, and Back
+returns through details to the saved space. The system back action first leaves a
+linked detail view before leaving its status page.
+
+Debug details previews include long access/address text, contacts, links and
+retained stale/error data in dark mode and at 2x fonts. Their declaration is not a
+rendered layout/device proof. Native Kotlin/JNI build, back-stack interaction,
+link handlers and TalkBack still require Android validation.
