@@ -3,22 +3,25 @@ package net.grafixmafia.spacestate.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.WifiOff
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -36,14 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import net.grafixmafia.spacestate.R
-import net.grafixmafia.spacestatekit.SpaceStateException
 import net.grafixmafia.spacestate.directory.DirectoryUiState
 import net.grafixmafia.spacestate.directory.matching
+import net.grafixmafia.spacestatekit.DirectoryEntry
 
-/** Every space in the SpaceAPI directory, searchable by name and address. */
+/** Search and selection retain directory freshness and native input/navigation. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpacePickerScreen(
@@ -56,7 +58,8 @@ fun SpacePickerScreen(
 ) {
     LaunchedEffect(Unit) { onAppear() }
     var query by rememberSaveable { mutableStateOf("") }
-    val entries = remember(directory.entries, query) { directory.entries.matching(query) }
+    val displayed = directory.displayEntries
+    val entries = remember(displayed, query) { displayed.matching(query) }
     val keyboard = LocalSoftwareKeyboardController.current
 
     Scaffold(
@@ -64,44 +67,49 @@ fun SpacePickerScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.choose_space)) },
                 navigationIcon = { BackButton(onBack) },
+                actions = {
+                    IconButton(onClick = onRetry, enabled = !directory.isLoading) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                    }
+                },
             )
         },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = { Text(stringResource(R.string.search_spaces)) },
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                // The list filters while typing; the search key only makes room for it.
-                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            Box(Modifier.fillMaxSize()) {
-                when {
-                    directory.entries.isEmpty() && directory.isLoading ->
+        Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Column(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.search_spaces)) },
+                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    if (directory.entries.isEmpty() && directory.isLoading) {
                         CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    directory.entries.isEmpty() && directory.error != null ->
-                        Unavailable(directory.error, onRetry, Modifier.align(Alignment.Center))
-                    else -> LazyColumn {
-                        items(entries, key = { it.endpoint }) { entry ->
-                            ListItem(
-                                leadingContent = { StatusDot(entry.status.color) },
-                                headlineContent = { Text(entry.name) },
-                                supportingContent = entry.address?.let { address -> { Text(address) } },
-                                trailingContent = if (entry.endpoint == selectedEndpoint) {
-                                    {
-                                        Icon(
-                                            Icons.Outlined.Check,
-                                            contentDescription = stringResource(R.string.selected),
-                                            tint = MaterialTheme.colorScheme.primary,
-                                        )
-                                    }
-                                } else null,
-                                modifier = Modifier.clickableListItem { onSelect(entry.endpoint) },
-                            )
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            directory.error?.let { error ->
+                                item { SpaceErrorCard(error.text, onRetry, enabled = !directory.isLoading) }
+                            }
+                            if (entries.isEmpty() && directory.error == null) {
+                                item { SpaceCard { Text(stringResource(R.string.no_spaces_found)) } }
+                            }
+                            items(entries, key = { it.endpoint }) { entry ->
+                                SpaceSelectionCard(
+                                    entry = entry,
+                                    observedAt = directory.timings[entry.endpoint]?.observedAt,
+                                    isSelected = entry.endpoint == selectedEndpoint,
+                                    onSelect = { onSelect(entry.endpoint) },
+                                )
+                            }
                         }
                     }
                 }
@@ -111,20 +119,24 @@ fun SpacePickerScreen(
 }
 
 @Composable
-private fun Unavailable(error: SpaceStateException, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier.padding(32.dp),
-    ) {
-        Icon(Icons.Outlined.WifiOff, contentDescription = null)
-        Text(stringResource(R.string.spaces_unavailable), style = MaterialTheme.typography.titleMedium)
-        Text(
-            error.text,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Button(onClick = onRetry) { Text(stringResource(R.string.try_again)) }
+fun SpaceSelectionCard(
+    entry: DirectoryEntry,
+    observedAt: java.time.Instant?,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+) {
+    SpaceCard(onClick = onSelect, isSelected = isSelected) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+            Text(entry.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            if (isSelected) {
+                Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+        entry.address?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(entry.status.icon, contentDescription = null, tint = entry.status.color, modifier = Modifier.size(20.dp))
+            Text(entry.status.title, color = entry.status.color)
+        }
+        ObservationTime(R.string.observed, observedAt)
     }
 }

@@ -11,7 +11,7 @@
     <string name="room_member">Members only</string>
     <string name="room_open">Open</string>
     <string name="room_open_plus">Open+</string>
-    <string name="room_closing">Closing</string>
+    <string name="room_closing">Closing soon</string>
     <string name="room_unknown">Unknown (%1$s)</string>
 
     <!-- %1$s is a relative time such as "5 minutes ago". -->
@@ -43,4 +43,41 @@
     <string name="error_invalid_data">The data could not be read.</string>
     <string name="error_invalid_endpoint">The space\'s address is invalid.</string>
     <string name="error_other">Something went wrong (%1$s).</string>
+
+    <string name="observed">Observed %1$s</string>
+    <string name="received">Received %1$s</string>
+    <string name="checked">Last checked %1$s</string>
+    <string name="no_observation">No confirmed observation</string>
+    <string name="last_known_details">Last known details; no current opening state</string>
+    <string name="last_known_rooms">Last known rooms; current states unavailable</string>
+    <string name="no_rooms">No room data</string>
+    <string name="no_spaces_found">No spaces found</string>
+    <string name="space_details">Space details</string>
+    <string name="address">Address</string>
+    <string name="access">Access</string>
+    <string name="country">Country code</string>
+    <string name="timezone">Time zone</string>
+    <string name="coordinates">Coordinates / map</string>
+    <string name="keyholder">Keyholder</string>
+    <string name="irc_nickname">IRC nickname: %1$s</string>
+    <string name="blog">Blog</string>
+    <string name="wiki">Wiki</string>
+    <string name="calendar">Calendar</string>
+    <string name="flickr">Flickr</string>
+    <string name="projects">Projects</string>
+    <string name="linked_space">Linked space</string>
+    <string name="open_space">Open space</string>
+    <string name="open_link">Open link</string>
+    <string name="cannot_open_link">No app could open this link.</string>
+    <string name="email">Email</string>
+    <string name="phone">Phone</string>
+    <string name="irc">IRC</string>
+    <string name="mailing_list">Mailing list</string>
+    <string name="matrix">Matrix</string>
+    <string name="mastodon">Mastodon</string>
+    <string name="xmpp">XMPP</string>
+    <string name="mumble">Mumble</string>
+    <string name="sip">SIP</string>
+    <string name="report_issue">Report an issue</string>
+    <string name="gopher">Gopher</string>
 </resources>

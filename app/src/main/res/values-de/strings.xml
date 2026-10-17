@@ -5,7 +5,7 @@
     <string name="status_unknown">Unbekannt</string>
 
     <string name="room_closed">Geschlossen</string>
-    <string name="room_keyholder">Nur Keyholder</string>
+    <string name="room_keyholder">Nur Schlüsselträger</string>
     <string name="room_member">Nur Mitglieder</string>
     <string name="room_open">Offen</string>
     <string name="room_open_plus">Offen+</string>
@@ -39,4 +39,41 @@
     <string name="error_invalid_data">Die Daten konnten nicht gelesen werden.</string>
     <string name="error_invalid_endpoint">Die Adresse des Space ist ungültig.</string>
     <string name="error_other">Etwas ist schiefgegangen (%1$s).</string>
+
+    <string name="observed">Stand: %1$s</string>
+    <string name="received">Abgerufen: %1$s</string>
+    <string name="checked">Zuletzt geprüft: %1$s</string>
+    <string name="no_observation">Kein belegter Stand</string>
+    <string name="last_known_details">Letzte bekannte Details; kein aktueller Öffnungsstatus</string>
+    <string name="last_known_rooms">Letzte bekannte Räume; aktuelle Zustände unbekannt</string>
+    <string name="no_rooms">Keine Raumdaten</string>
+    <string name="no_spaces_found">Keine Spaces gefunden</string>
+    <string name="space_details">Space-Details</string>
+    <string name="address">Adresse</string>
+    <string name="access">Zugang</string>
+    <string name="country">Ländercode</string>
+    <string name="timezone">Zeitzone</string>
+    <string name="coordinates">Koordinaten / Karte</string>
+    <string name="keyholder">Schlüsselträger</string>
+    <string name="irc_nickname">IRC-Spitzname: %1$s</string>
+    <string name="blog">Blog</string>
+    <string name="wiki">Wiki</string>
+    <string name="calendar">Kalender</string>
+    <string name="flickr">Flickr</string>
+    <string name="projects">Projekte</string>
+    <string name="linked_space">Verknüpfter Space</string>
+    <string name="open_space">Space öffnen</string>
+    <string name="open_link">Link öffnen</string>
+    <string name="cannot_open_link">Keine App konnte diesen Link öffnen.</string>
+    <string name="email">E-Mail</string>
+    <string name="phone">Telefon</string>
+    <string name="irc">IRC</string>
+    <string name="mailing_list">Mailingliste</string>
+    <string name="matrix">Matrix</string>
+    <string name="mastodon">Mastodon</string>
+    <string name="xmpp">XMPP</string>
+    <string name="mumble">Mumble</string>
+    <string name="sip">SIP</string>
+    <string name="report_issue">Problem melden</string>
+    <string name="gopher">Gopher</string>
 </resources>

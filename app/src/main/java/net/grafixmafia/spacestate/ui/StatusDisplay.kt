@@ -1,7 +1,6 @@
 package net.grafixmafia.spacestate.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -18,12 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import net.grafixmafia.spacestate.R
-import net.grafixmafia.spacestate.ui.theme.ClosedDark
-import net.grafixmafia.spacestate.ui.theme.ClosedLight
-import net.grafixmafia.spacestate.ui.theme.OpenDark
-import net.grafixmafia.spacestate.ui.theme.OpenLight
-import net.grafixmafia.spacestate.ui.theme.RestrictedDark
-import net.grafixmafia.spacestate.ui.theme.RestrictedLight
+import net.grafixmafia.spacestate.ui.theme.LocalSpaceStatusColors
 import net.grafixmafia.spacestatekit.MainframeRoom
 import net.grafixmafia.spacestatekit.MainframeRoomState
 import net.grafixmafia.spacestatekit.SpaceStateException
@@ -49,8 +43,8 @@ val SpaceStatus.icon: ImageVector
 val SpaceStatus.color: Color
     @Composable @ReadOnlyComposable
     get() = when (this) {
-        SpaceStatus.OPEN -> if (isSystemInDarkTheme()) OpenDark else OpenLight
-        SpaceStatus.CLOSED -> if (isSystemInDarkTheme()) ClosedDark else ClosedLight
+        SpaceStatus.OPEN -> LocalSpaceStatusColors.current.open
+        SpaceStatus.CLOSED -> LocalSpaceStatusColors.current.closed
         SpaceStatus.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -63,15 +57,15 @@ val MainframeRoom.stateTitle: String
         MainframeRoomState.OPEN -> stringResource(R.string.room_open)
         MainframeRoomState.OPEN_PLUS -> stringResource(R.string.room_open_plus)
         MainframeRoomState.CLOSING -> stringResource(R.string.room_closing)
-        MainframeRoomState.UNKNOWN -> stringResource(R.string.room_unknown, rawState)
+        MainframeRoomState.UNKNOWN -> if (rawState.isBlank()) stringResource(R.string.status_unknown) else stringResource(R.string.room_unknown, rawState)
     }
 
-/** Keyholders, members and closing are neither open to guests nor fully closed. */
+/** Restricted/closing labels are more specific than the generic closed-to-guests state. */
 val MainframeRoomState.color: Color
     @Composable @ReadOnlyComposable
     get() = when (this) {
         MainframeRoomState.KEYHOLDER, MainframeRoomState.MEMBER, MainframeRoomState.CLOSING ->
-            if (isSystemInDarkTheme()) RestrictedDark else RestrictedLight
+            LocalSpaceStatusColors.current.restricted
         else -> status.color
     }
 

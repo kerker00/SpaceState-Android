@@ -1,7 +1,12 @@
 package net.grafixmafia.spacestate.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -10,7 +15,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -19,7 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import net.grafixmafia.spacestate.R
@@ -42,28 +48,31 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        Column(Modifier.padding(padding)) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.space)) },
-                supportingContent = { Text(state.info?.name ?: state.endpoint?.let(::hostOf).orEmpty()) },
-                modifier = Modifier.clickableListItem(onChooseSpace),
-            )
-            var choosingInterval by remember { mutableStateOf(false) }
-            Box {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.check_every)) },
-                    supportingContent = { Text(minutes(state.refreshSeconds)) },
-                    modifier = Modifier.clickableListItem { choosingInterval = true },
-                )
-                DropdownMenu(expanded = choosingInterval, onDismissRequest = { choosingInterval = false }) {
-                    SettingsStore.refreshIntervals.forEach { seconds ->
-                        DropdownMenuItem(
-                            text = { Text(minutes(seconds)) },
-                            onClick = {
-                                choosingInterval = false
-                                onRefreshSecondsChange(seconds)
-                            },
-                        )
+        Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Column(
+                modifier = Modifier.widthIn(max = 720.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SpaceCard(onClick = onChooseSpace) {
+                    SpaceHeading(stringResource(R.string.space))
+                    Text(state.info?.name ?: state.endpoint?.let(::hostOf).orEmpty())
+                }
+                var choosingInterval by remember { mutableStateOf(false) }
+                Box {
+                    SpaceCard(onClick = { choosingInterval = true }) {
+                        SpaceHeading(stringResource(R.string.check_every))
+                        Text(minutes(state.refreshSeconds))
+                    }
+                    DropdownMenu(expanded = choosingInterval, onDismissRequest = { choosingInterval = false }) {
+                        SettingsStore.refreshIntervals.forEach { seconds ->
+                            DropdownMenuItem(
+                                text = { Text(minutes(seconds)) },
+                                onClick = {
+                                    choosingInterval = false
+                                    onRefreshSecondsChange(seconds)
+                                },
+                            )
+                        }
                     }
                 }
             }
